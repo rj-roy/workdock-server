@@ -20,7 +20,7 @@ export const getApprovedWorkspace = async (req: Request, res: Response): Promise
 
 export const getWorkspaceByQuery = async (req: Request, res: Response): Promise<void> => {
     const { workspaceCollection } = getCollection();
-    const { category, capacity, priceRange, city } = req.query;
+    const { category, capacity, priceRange, city, page } = req.query;
     const filter: Record<string, any> = {};
 
     if (category) {
@@ -39,6 +39,19 @@ export const getWorkspaceByQuery = async (req: Request, res: Response): Promise<
         if (!isNaN(max)) filter.price.$lte = max;
     };
 
-    const workspaces = await workspaceCollection.find(filter).toArray();
+    const DEFAULT_LIMIT = 9;
+    const pageNum = Math.max(Number(page) || 1, 1);
+    const skip = (pageNum - 1) * DEFAULT_LIMIT;
+
+    const [workspaces, totalCount] = await Promise.all([
+        workspaceCollection.find(filter).skip(skip).limit(DEFAULT_LIMIT).toArray(),
+        workspaceCollection.countDocuments(filter),
+    ]);
+
+    const totalPages = Math.ceil(totalCount / DEFAULT_LIMIT);
+
+    res.setHeader("X-Total-Count", totalCount);
+    res.setHeader("X-Total-Pages", totalPages);
+    res.setHeader("X-Current-Page", pageNum);
     res.send(workspaces);
 };
