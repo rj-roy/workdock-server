@@ -5,6 +5,8 @@ import rateLimit from 'express-rate-limit';
 import { connectDb, disconnectDb } from './config/db.js';
 import { Server } from 'node:http';
 
+import workspaceRoutes from './routes/workspace.route.ts'
+
 dotenv.config();
 const app = express();
 app.use(express.json());
@@ -19,7 +21,7 @@ const publicLimiter = rateLimit({
     max: 60
 });
 
-
+app.use('/api/v1/get/workspace', publicLimiter, workspaceRoutes)
 
 
 const port: number = Number(process.env.PORT) || 5000;
