@@ -20,14 +20,24 @@ export const getApprovedWorkspace = async (req: Request, res: Response): Promise
 
 export const getWorkspaceByQuery = async (req: Request, res: Response): Promise<void> => {
     const { workspaceCollection } = getCollection();
-    const { category, capacity, priceRange, city, page } = req.query;
-    const filter: Record<string, any> = {};
+    const { category, capacity, priceRange, city, page, search } = req.query;
+    const filter: Record<string, any> = {status: "approved"};
+
+    const searchTerm = String(search ?? "").trim();
+    if (searchTerm.length > 100) {
+        res.status(400).send({ messege: "Search Too Long" });
+        return;
+    };
+
+    function secureRegex(text: string): string {
+        return text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    };
 
     if (category) {
         filter.category = category;
     };
     if (city) {
-        filter.city = { $regex: new RegExp(city as string, "i") };
+        filter.city = { $regex: new RegExp(secureRegex(city as string), "i") };
     };
     if (capacity) {
         filter.capacity = { $gte: Number(capacity) };
@@ -39,11 +49,19 @@ export const getWorkspaceByQuery = async (req: Request, res: Response): Promise<
         if (!isNaN(max)) filter.price.$lte = max;
     };
 
+    if (search) {
+
+        filter.title = {
+            $regex: secureRegex(search as string),
+            $options: "i",
+        };
+    };
+
     const DEFAULT_LIMIT = 9;
-    const pageNum = Math.max(Number(page) || 1, 1);
+    const pageNum = Math.min(Math.max(Number(page) || 1, 1), 100)
     const skip = (pageNum - 1) * DEFAULT_LIMIT;
 
-    const [workspaces, totalCount] = await Promise.all([
+    let [workspaces, totalCount] = await Promise.all([
         workspaceCollection.find(filter).skip(skip).limit(DEFAULT_LIMIT).toArray(),
         workspaceCollection.countDocuments(filter),
     ]);
