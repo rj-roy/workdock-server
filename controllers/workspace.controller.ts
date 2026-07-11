@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import { getCollection } from "../config/db.ts"
+import { ObjectId } from "mongodb";
 
 export const getAllWorkspace = async (req: Request, res: Response): Promise<void> => {
     const { workspaceCollection } = getCollection();
@@ -18,12 +19,21 @@ export const getApprovedWorkspace = async (req: Request, res: Response): Promise
     res.send(result);
 };
 
+export const getWorkspaceByItsId = async (req: Request<{ id: string }>, res: Response): Promise<void> => {
+    const { id } = req.params;
+    const { workspaceCollection } = getCollection();
+    const result = await workspaceCollection.findOne({
+        _id: new ObjectId(id),
+    });
+    res.send(result);
+};
+
 export const getWorkspaceByQuery = async (req: Request, res: Response): Promise<void> => {
     const { workspaceCollection } = getCollection();
-    const { category, capacity, priceRange, city, page, search } = req.query;
-    const filter: Record<string, any> = {status: "approved"};
-
+    const { category, capacity, pricePerDay, city, page, search } = req.query;
+    const filter: Record<string, any> = { status: "approved" };
     const searchTerm = String(search ?? "").trim();
+
     if (searchTerm.length > 100) {
         res.status(400).send({ messege: "Search Too Long" });
         return;
@@ -42,15 +52,14 @@ export const getWorkspaceByQuery = async (req: Request, res: Response): Promise<
     if (capacity) {
         filter.capacity = { $gte: Number(capacity) };
     };
-    if (priceRange) {
-        const [min, max] = (priceRange as string).split("-").map(Number);
-        filter.price = {};
-        if (!isNaN(min)) filter.price.$gte = min;
-        if (!isNaN(max)) filter.price.$lte = max;
+    if (pricePerDay) {
+        const [min, max] = (pricePerDay as string).split("-").map(Number);
+        filter.pricePerDay = {};
+        if (!isNaN(min)) filter.pricePerDay.$gte = min;
+        if (!isNaN(max)) filter.pricePerDay.$lte = max;
     };
 
     if (search) {
-
         filter.title = {
             $regex: secureRegex(search as string),
             $options: "i",
@@ -61,7 +70,7 @@ export const getWorkspaceByQuery = async (req: Request, res: Response): Promise<
     const pageNum = Math.min(Math.max(Number(page) || 1, 1), 100)
     const skip = (pageNum - 1) * DEFAULT_LIMIT;
 
-    let [workspaces, totalCount] = await Promise.all([
+    const [workspaces, totalCount] = await Promise.all([
         workspaceCollection.find(filter).skip(skip).limit(DEFAULT_LIMIT).toArray(),
         workspaceCollection.countDocuments(filter),
     ]);
