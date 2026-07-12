@@ -6,6 +6,7 @@ import { connectDb, disconnectDb } from './config/db.js';
 import { Server } from 'node:http';
 
 import workspaceRoutes from './routes/workspace.route.ts'
+import bookingRoutes from './routes/booking.route.ts'
 
 dotenv.config();
 const app = express();
@@ -21,7 +22,13 @@ const publicLimiter = rateLimit({
     max: 60
 });
 
-app.use('/api/v1/get/workspace', publicLimiter, workspaceRoutes)
+const postLimiter = rateLimit({
+    windowMs: 60_000,
+    max: 3
+});
+
+app.use('/api/v1/workspace', publicLimiter, workspaceRoutes);
+app.use('/api/v1/booking', postLimiter, bookingRoutes);
 
 
 const port: number = Number(process.env.PORT) || 5000;

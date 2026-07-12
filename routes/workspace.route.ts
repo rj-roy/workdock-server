@@ -3,9 +3,9 @@ import { getAllWorkspace, getApprovedWorkspace, getWorkspaceByItsId, getWorkspac
 
 const router = express.Router();
 
-router.get('/all', getAllWorkspace);
-router.get('/status', getApprovedWorkspace);
-router.get('/query', getWorkspaceByQuery);
-router.get('/id/:id', getWorkspaceByItsId);
+router.get('/get/all', getAllWorkspace);
+router.get('/get/status', getApprovedWorkspace);
+router.get('/get/query', getWorkspaceByQuery);
+router.get('/get/id/:id', getWorkspaceByItsId);
 
 export default router;
