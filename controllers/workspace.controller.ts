@@ -2,6 +2,34 @@ import { Request, Response } from "express";
 import { getCollection } from "../config/db.ts"
 import { ObjectId } from "mongodb";
 
+export const createWorkspace = async (req: Request, res: Response): Promise<void> => {
+    try {
+        const { workspaceCollection } = getCollection();
+        const data = req.body;
+
+        if (Object.values(data).some(value => value === null || value === "")) {
+            res.status(404).json({
+                success: false,
+                message: "All the fields are required! Please fillup the form correctly.",
+                data: null
+            })
+        };
+
+        const newWorkspace = await workspaceCollection.insertOne(data);
+
+        res.status(201).json({
+            success: true,
+            messege: "Succeed",
+            data: newWorkspace
+        })
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: "Internal server error.",
+        });
+    }
+};
+
 export const getAllWorkspace = async (req: Request, res: Response): Promise<void> => {
     const { workspaceCollection } = getCollection();
     const result = await workspaceCollection.find().toArray();
@@ -21,6 +49,15 @@ export const getApprovedWorkspace = async (req: Request, res: Response): Promise
 
 export const getWorkspaceByItsId = async (req: Request<{ id: string }>, res: Response): Promise<void> => {
     const { id } = req.params;
+    if (id?.length < 20) {
+        res.status(404).send({ 
+            success: false,
+            message: "Workspace not found!",
+            data: null
+        });
+        return;
+    };
+
     const { workspaceCollection } = getCollection();
     const result = await workspaceCollection.findOne({
         _id: new ObjectId(id),
@@ -35,7 +72,7 @@ export const getWorkspaceByQuery = async (req: Request, res: Response): Promise<
     const searchTerm = String(search ?? "").trim();
 
     if (searchTerm.length > 100) {
-        res.status(400).send({ messege: "Search Too Long" });
+        res.status(400).send({ success: false, messege: "Search Too Long", data: null });
         return;
     };
 
