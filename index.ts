@@ -5,8 +5,9 @@ import rateLimit from 'express-rate-limit';
 import { connectDb, disconnectDb } from './config/db.js';
 import { Server } from 'node:http';
 
-import workspaceRoutes from './routes/workspace.route.ts'
-import bookingRoutes from './routes/booking.route.ts'
+import workspaceRoutes from './routes/workspace.route.ts';
+import bookingRoutes from './routes/booking.route.ts';
+import userRoutes from './routes/user.routes.ts';
 
 dotenv.config();
 const app = express();
@@ -29,6 +30,7 @@ const postLimiter = rateLimit({
 
 app.use('/api/v1/workspace', publicLimiter, workspaceRoutes);
 app.use('/api/v1/booking', postLimiter, bookingRoutes);
+app.use('/api/v1/user', postLimiter, userRoutes);
 
 
 const port: number = Number(process.env.PORT) || 5000;

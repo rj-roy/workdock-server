@@ -3,6 +3,7 @@ import { Collection, Db, MongoClient, ServerApiVersion } from "mongodb";
 interface Collections {
     workspaceCollection: Collection;
     bookingCollection: Collection;
+    userCollection: Collection;
 }
 
 let client: MongoClient;
@@ -31,6 +32,7 @@ export const connectDb = async () => {
         collections = {
             workspaceCollection: db.collection(process.env.WORKSPACE_COLLECTION!),
             bookingCollection: db.collection(process.env.BOOKING_COLLECTION!),
+            userCollection: db.collection(process.env.USER_COLLECTION!),
         };
 
         console.log("DB Connected");
